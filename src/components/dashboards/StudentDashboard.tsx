@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { User, Subject, Assignment, Notice, Event } from '../../types';
 import { 
   BookOpen, 
@@ -13,12 +15,24 @@ import {
   X
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar,  CartesianGrid, } from 'recharts';
+import { setDate } from 'date-fns/fp';
 
 interface StudentDashboardProps {
   user: User;
   onLogout: () => void;
 }
+
+const revenueData = [
+  { name: 'Week 1', value: 11000 },
+  { name: 'Week 2', value: 12500 },
+  { name: 'Week 3', value: 11800 },
+  { name: 'Week 4', value: 12300 },
+  { name: 'Week 5', value: 13000 },
+  { name: 'Week 6', value: 13800 },
+  { name: 'Week 7', value: 15231.89 }
+];
+
 
 const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('home');
@@ -70,7 +84,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
   const assignments: Assignment[] = [
     { id: '1', title: 'Calculus Assignment', subject: 'Mathematics', dueDate: '2024-03-25', status: 'pending' },
     { id: '2', title: 'Physics Lab Report', subject: 'Physics', dueDate: '2024-03-28', status: 'submitted' },
-    { id: '3', title: 'Programming Project', subject: 'Computer Science', dueDate: '2024-04-01', status: 'graded', grade: 'A' },
+    //{ id: '3', title: 'Programming Project', subject: 'Computer Science', dueDate: '2024-04-01', status: 'graded', grade: 'A' },
+    { id: '4', title: 'Commuity Project', subject: 'English', dueDate: '2024-04-11', status: 'graded', grade: 'B' },
+    { id: '5', title: 'BEE', subject: 'Electronics', dueDate: '2024-04-16', status: 'graded', grade: 'C' },
   ];
 
   const notices: Notice[] = [
@@ -118,7 +134,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
   const renderHighPriorityNotices = () => {
     const highPriorityNotices = notices.filter(notice => notice.priority === 'high');
     return (
-      <div className="bg-white rounded-lg shadow-md p-4">
+      <div className="bg-white rounded-xl shadow p-3 text-xs">
         <div className="flex items-center mb-4">
           <Bell className="h-5 w-5 text-primary-700 mr-2" />
           <h3 className="font-semibold text-primary-900">Important Notices</h3>
@@ -147,9 +163,95 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
     );
   };
 
+  
+
+  const renderCalendarWithEvents = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+  
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+  
+    const days = [];
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null); // Fill initial empty days
+    }
+  
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+  
+    const dayHasEvent = (day: number) => {
+      if (!day) return false;
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return events.some(event => event.date.startsWith(dateStr));
+    };
+  
+    const getEventsForDay = (day: number) => {
+      if (!day) return [];
+      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return events.filter(event => event.date.startsWith(dateStr));
+    };
+  
+    return (
+      <div className="bg-white rounded-lg shadow-md p-4 w-full max-w-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-primary-900">
+            {format(new Date(currentYear, currentMonth), 'MMMM yyyy')}
+          </h3>
+          <div className="flex space-x-2">
+            <button className="p-1 rounded hover:bg-gray-100">
+              <Calendar className="h-5 w-5 text-primary-700" />
+            </button>
+          </div>
+        </div>
+  
+        <div className="grid grid-cols-7 gap-0.5 mb-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center text-sm font-medium text-gray-500">
+              {day}
+            </div>
+          ))}
+        </div>
+  
+        <div className="grid grid-cols-7 gap-1">
+          {days.map((day, index) => (
+            <div
+              key={index}
+              className={`aspect-square p-1 rounded-full text-center flex flex-col justify-center items-center ${
+                day === currentDate.getDate() ? 'border border-primary-500 bg-primary-50' : 'border border-transparent'
+              } ${day ? 'hover:bg-gray-100 cursor-pointer' : ''}`}
+            >
+              {day && (
+                <>
+                  <div className={`text-sm leading-none ${
+                    day === currentDate.getDate() ? 'font-bold text-primary-700' : 'text-gray-700'
+                  }`}>
+                    {day}
+                  </div>
+                  {dayHasEvent(day) && (
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary-500 mt-1" />
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+  
+        <button
+          onClick={() => setActiveTab('calendar')}
+          className="mt-3 text-sm text-primary-700 hover:text-primary-900 flex items-center"
+        >
+          View all events
+        </button>
+      </div>
+    );
+  };
+
   const renderAttendanceSummary = () => {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex flex-col gap-4 w-full max-w-xs">
         {subjects.map(subject => (
           <div key={subject.id} className="bg-white rounded-lg shadow-md p-4">
             <h4 className="font-medium text-primary-800">{subject.name}</h4>
@@ -178,114 +280,9 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
       </div>
     );
   };
+  
+  
 
-  const renderCalendarWithEvents = () => {
-    // Simplified calendar view with events marked
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    
-    // Create array of days
-    const days = [];
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(null); // Empty days before the first day of month
-    }
-    
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-    
-    // Check if a day has events
-    const dayHasEvent = (day: number) => {
-      if (!day) return false;
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      return events.some(event => event.date.startsWith(dateStr));
-    };
-    
-    // Get events for a specific day
-    const getEventsForDay = (day: number) => {
-      if (!day) return [];
-      const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      return events.filter(event => event.date.startsWith(dateStr));
-    };
-    
-    return (
-      <div className="bg-white rounded-lg shadow-md p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-primary-900">
-            {format(new Date(currentYear, currentMonth), 'MMMM yyyy')}
-          </h3>
-          <div className="flex space-x-2">
-            <button className="p-1 rounded hover:bg-gray-100">
-              <Calendar className="h-5 w-5 text-primary-700" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center text-sm font-medium text-gray-500">
-              {day}
-            </div>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((day, index) => (
-            <div 
-              key={index} 
-              className={`aspect-square p-1 rounded-lg border ${
-                day === currentDate.getDate() ? 'border-primary-500 bg-primary-50' : 'border-transparent'
-              } ${day ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
-            >
-              {day && (
-                <>
-                  <div className="flex justify-between items-start">
-                    <span className={`text-sm ${day === currentDate.getDate() ? 'font-bold text-primary-700' : 'text-gray-700'}`}>
-                      {day}
-                    </span>
-                    {dayHasEvent(day) && (
-                      <span className="h-2 w-2 rounded-full bg-primary-500"></span>
-                    )}
-                  </div>
-                  
-                  <div className="mt-1">
-                    {getEventsForDay(day).slice(0, 2).map((event, idx) => (
-                      <div 
-                        key={idx}
-                        className={`text-xs px-1 py-0.5 rounded truncate ${
-                          event.type === 'academic' ? 'bg-primary-100 text-primary-800' :
-                          event.type === 'cultural' ? 'bg-purple-100 text-purple-800' :
-                          'bg-green-100 text-green-800'
-                        }`}
-                      >
-                        {event.title}
-                      </div>
-                    ))}
-                    {getEventsForDay(day).length > 2 && (
-                      <div className="text-xs text-primary-600 text-center">
-                        +{getEventsForDay(day).length - 2} more
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-        
-        <button 
-          onClick={() => setActiveTab('calendar')}
-          className="mt-3 text-sm text-primary-700 hover:text-primary-900 flex items-center"
-        >
-          View all events
-        </button>
-      </div>
-    );
-  };
 
   const renderSubjectCard = (subject: Subject) => {
     const weightedAverage = calculateWeightedAverage(subject.grades);
@@ -296,7 +293,7 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
     }));
 
     return (
-      <div key={subject.id} className="bg-white p-6 rounded-lg shadow-md">
+      <div key={subject.id} className="bg-white p-4 rounded-xl shadow-sm transition transform hover:scale-[1.01]">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="text-lg font-semibold text-primary-900">{subject.name}</h3>
@@ -384,21 +381,26 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
           </div>
         </div>
         
-        {/* Calendar and Notices section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
-            {renderCalendarWithEvents()}
-          </div>
-          <div className="lg:col-span-1">
-            {renderHighPriorityNotices()}
-          </div>
-        </div>
-        
-        {/* Attendance Summary */}
-        <div>
-          <h3 className="font-semibold text-primary-900 mb-3">Attendance Summary</h3>
-          {renderAttendanceSummary()}
-        </div>
+  {/* Calendar (1/3 width) */}
+  <div>
+    {renderCalendarWithEvents()}
+  </div>
+
+  {/* Notices (1/3 width) */}
+  <div>
+    {renderHighPriorityNotices()}
+  </div>
+
+  {/* Attendance Summary (1/3 width) */}
+  <div>
+    <h3 className="font-semibold text-primary-900 mb-3">Attendance Summary</h3>
+    {renderAttendanceSummary()}
+  </div>
+
+</div>
+
+
       </div>
     );
   };
@@ -410,69 +412,81 @@ const StudentDashboard: React.FC<StudentDashboardProps> = ({ user, onLogout }) =
 
       case 'subjects':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto ">
             {subjects.map(renderSubjectCard)}
           </div>
         );
 
       case 'assignments':
         return (
-          <div className="space-y-4">
-            {assignments.map((assignment) => (
-              <div key={assignment.id} className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary-900">{assignment.title}</h3>
-                    <p className="text-sm text-primary-700 mt-1">{assignment.subject}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    assignment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    assignment.status === 'submitted' ? 'bg-primary-100 text-primary-800' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {assignment.status}
-                  </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 py-4 px-2">
+          {assignments.map((assignment) => (
+            <div
+              key={assignment.id}
+              className="bg-white p-6 rounded-lg shadow-md"
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold text-primary-900">
+                    {assignment.title}
+                  </h3>
+                  <p className="text-sm text-primary-700 mt-1">{assignment.subject}</p>
                 </div>
-                <div className="mt-4 flex justify-between items-center">
-                  <p className="text-sm text-gray-600">
-                    Due: {format(new Date(assignment.dueDate), 'MMM dd, yyyy')}
-                  </p>
-                  {assignment.grade && (
-                    <span className="text-sm font-semibold text-primary-700">
-                      Grade: {assignment.grade}
-                    </span>
-                  )}
-                </div>
+                <span
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    assignment.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : assignment.status === 'submitted'
+                      ? 'bg-primary-100 text-primary-800'
+                      : 'bg-green-100 text-green-800'
+                  }`}
+                >
+                  {assignment.status}
+                </span>
               </div>
-            ))}
-          </div>
+              <div className="mt-4 flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  Due: {format(new Date(assignment.dueDate), 'MMM dd, yyyy')}
+                </p>
+                {assignment.grade && (
+                  <span className="text-sm font-semibold text-primary-700">
+                    Grade: {assignment.grade}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        
         );
 
       case 'calendar':
         return (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <div key={event.id} className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary-900">{event.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    event.type === 'academic' ? 'bg-primary-100 text-primary-800' :
-                    event.type === 'cultural' ? 'bg-purple-100 text-purple-800' :
-                    event.type === 'sports' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {event.type}
-                  </span>
-                </div>
-                <p className="text-sm text-primary-700 mt-4">
-                  {format(new Date(event.date), 'MMMM dd, yyyy')}
-                </p>
-              </div>
-            ))}
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+  {events.map((event) => (
+    <div key={event.id} className="bg-white p-6 rounded-lg shadow-md">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-primary-900">{event.title}</h3>
+          <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+        </div>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+          event.type === 'academic' ? 'bg-primary-100 text-primary-800' :
+          event.type === 'cultural' ? 'bg-purple-100 text-purple-800' :
+          event.type === 'sports' ? 'bg-green-100 text-green-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {event.type}
+        </span>
+      </div>
+      <p className="text-sm text-primary-700 mt-4">
+        {format(new Date(event.date), 'MMMM dd, yyyy')}
+      </p>
+    </div>
+  ))}
+</div>
+
         );
 
       case 'notices':
