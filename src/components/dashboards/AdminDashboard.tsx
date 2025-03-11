@@ -1,97 +1,160 @@
 import React, { useState } from 'react';
-import { User, StudentData, TeacherData, ExamRoom, DepartmentStats } from '../../types';
-import { 
-  Settings, 
-  LogOut, 
-  Users, 
-  GraduationCap, 
-  School,
-  BookOpen,
-  BarChart3,
-  Calendar,
-  PlusCircle,
-  Edit,
-  Trash2
-} from 'lucide-react';
+import { BarChart3, Calendar, PlusCircle, Edit, Trash2, Users, Settings, GraduationCap, School, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { User, StudentData, TeacherData, ExamRoom, DepartmentStats } from '../../types';
 
 interface AdminDashboardProps {
   user: User;
   onLogout: () => void;
 }
 
+interface ExamSchedule {
+  id: string;
+  courseName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  roomIds: string[];
+}
+
+// Mock data
+const initialStudents: StudentData[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    email: 'john@example.com',
+    class: 'X-A',
+    rollNumber: '2024001',
+    attendance: 92,
+    performanceData: [
+      { subject: 'Mathematics', score: 85 },
+      { subject: 'Physics', score: 78 },
+      { subject: 'Chemistry', score: 92 }
+    ]
+  },
+];
+
+const initialTeachers: TeacherData[] = [
+  {
+    id: '1',
+    name: 'Dr. Sarah Wilson',
+    email: 'sarah@example.com',
+    department: 'Mathematics',
+    subjects: ['Calculus', 'Linear Algebra'],
+    joinDate: '2022-08-15'
+  },
+];
+
+const initialExamRooms: ExamRoom[] = [
+  {
+    id: '1',
+    roomNumber: '101',
+    capacity: 40,
+    floor: '1st',
+    building: 'Main Block',
+    status: 'available'
+  },
+];
+
+const departmentStats: DepartmentStats[] = [
+  {
+    name: 'Mathematics',
+    studentCount: 150,
+    teacherCount: 8,
+    averagePerformance: 82
+  },
+  {
+    name: 'Physics',
+    studentCount: 120,
+    teacherCount: 6,
+    averagePerformance: 78
+  },
+  {
+    name: 'Chemistry',
+    studentCount: 130,
+    teacherCount: 7,
+    averagePerformance: 85
+  }
+];
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [students, setStudents] = useState<StudentData[]>(initialStudents);
+  const [teachers, setTeachers] = useState<TeacherData[]>(initialTeachers);
+  const [examRooms, setExamRooms] = useState<ExamRoom[]>(initialExamRooms);
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [showAddTeacher, setShowAddTeacher] = useState(false);
+  const [showAddRoom, setShowAddRoom] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<StudentData | null>(null);
+  const [editingTeacher, setEditingTeacher] = useState<TeacherData | null>(null);
+  const [editingRoom, setEditingRoom] = useState<ExamRoom | null>(null);
+  const [exams, setExams] = useState<ExamSchedule[]>([]);
+  const [showScheduleExam, setShowScheduleExam] = useState(false);
 
-  // Mock data
-  const students: StudentData[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      class: 'X-A',
-      rollNumber: '2024001',
-      attendance: 92,
-      performanceData: [
-        { subject: 'Mathematics', score: 85 },
-        { subject: 'Physics', score: 78 },
-        { subject: 'Chemistry', score: 92 }
-      ]
-    },
-    // Add more students...
-  ];
+  // Student Handlers
+  const handleDeleteStudent = (id: string) => {
+    setStudents(students.filter(student => student.id !== id));
+  };
 
-  const teachers: TeacherData[] = [
-    {
-      id: '1',
-      name: 'Dr. Sarah Wilson',
-      email: 'sarah@example.com',
-      department: 'Mathematics',
-      subjects: ['Calculus', 'Linear Algebra'],
-      joinDate: '2022-08-15'
-    },
-    // Add more teachers...
-  ];
+  const handleAddStudent = (newStudent: StudentData) => {
+    setStudents([...students, newStudent]);
+    setShowAddStudent(false);
+  };
 
-  const examRooms: ExamRoom[] = [
-    {
-      id: '1',
-      roomNumber: '101',
-      capacity: 40,
-      floor: '1st',
-      building: 'Main Block',
-      status: 'available'
-    },
-    // Add more rooms...
-  ];
+  const handleEditStudent = (updatedStudent: StudentData) => {
+    setStudents(students.map(student => 
+      student.id === updatedStudent.id ? updatedStudent : student
+    ));
+    setEditingStudent(null);
+  };
 
-  const departmentStats: DepartmentStats[] = [
-    {
-      name: 'Mathematics',
-      studentCount: 150,
-      teacherCount: 8,
-      averagePerformance: 82
-    },
-    {
-      name: 'Physics',
-      studentCount: 120,
-      teacherCount: 6,
-      averagePerformance: 78
-    },
-    {
-      name: 'Chemistry',
-      studentCount: 130,
-      teacherCount: 7,
-      averagePerformance: 85
-    }
-  ];
+  // Teacher Handlers
+  const handleDeleteTeacher = (id: string) => {
+    setTeachers(teachers.filter(teacher => teacher.id !== id));
+  };
 
+  const handleAddTeacher = (newTeacher: TeacherData) => {
+    setTeachers([...teachers, newTeacher]);
+    setShowAddTeacher(false);
+  };
+
+  const handleEditTeacher = (updatedTeacher: TeacherData) => {
+    setTeachers(teachers.map(teacher => 
+      teacher.id === updatedTeacher.id ? updatedTeacher : teacher
+    ));
+    setEditingTeacher(null);
+  };
+
+  // Exam Room Handlers
+  const handleAddExamRoom = (newRoom: ExamRoom) => {
+    setExamRooms([...examRooms, newRoom]);
+    setShowAddRoom(false);
+  };
+
+  const handleDeleteRoom = (id: string) => {
+    setExamRooms(examRooms.filter(room => room.id !== id));
+  };
+
+  const handleEditExamRoom = (updatedRoom: ExamRoom) => {
+    setExamRooms(examRooms.map(room => 
+      room.id === updatedRoom.id ? updatedRoom : room
+    ));
+    setEditingRoom(null);
+  };
+
+  const handleScheduleExam = (newExam: ExamSchedule) => {
+    setExams([...exams, newExam]);
+    setShowScheduleExam(false);
+  };
+
+  // Render Functions
   const renderOverview = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Department Performance Chart */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-primary-900">Department Performance</h3>
+          <h3 className="text-lg font-semibold text-primary-900">Faculty Performance</h3>
           <BarChart3 className="h-6 w-6 text-primary-700" />
         </div>
         <div className="h-64">
@@ -108,6 +171,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
         </div>
       </div>
 
+      {/* Student Distribution Chart */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary-900">Student Distribution</h3>
@@ -127,25 +191,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
         </div>
       </div>
 
+      {/* Quick Actions */}
       <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2 lg:col-span-1">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary-900">Quick Actions</h3>
           <Settings className="h-6 w-6 text-primary-700" />
         </div>
         <div className="space-y-4">
-          <button className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors">
+          <button 
+            onClick={() => setShowAddStudent(true)}
+            className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors"
+          >
             <span className="flex items-center">
               <PlusCircle className="h-5 w-5 mr-2 text-primary-700" />
               <span className="text-primary-900">Add New Student</span>
             </span>
           </button>
-          <button className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors">
+          <button 
+            onClick={() => setShowAddTeacher(true)}
+            className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors"
+          >
             <span className="flex items-center">
               <PlusCircle className="h-5 w-5 mr-2 text-primary-700" />
               <span className="text-primary-900">Add New Teacher</span>
             </span>
           </button>
-          <button className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors">
+          <button 
+            onClick={() => setShowScheduleExam(true)}
+            className="w-full flex items-center justify-between p-3 bg-primary-100 rounded-md hover:bg-primary-300 transition-colors"
+          >
             <span className="flex items-center">
               <Calendar className="h-5 w-5 mr-2 text-primary-700" />
               <span className="text-primary-900">Schedule Exam</span>
@@ -160,7 +234,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-primary-900">Student Management</h2>
-        <button className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center">
+        <button 
+          onClick={() => setShowAddStudent(true)}
+          className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center"
+        >
           <PlusCircle className="h-5 w-5 mr-2" />
           Add Student
         </button>
@@ -201,10 +278,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-primary-700 hover:text-primary-900 mr-3">
+                  <button
+                    onClick={() => setEditingStudent(student)}
+                    className="text-primary-700 hover:text-primary-900 mr-3"
+                  >
                     <Edit className="h-5 w-5" />
                   </button>
-                  <button className="text-red-600 hover:text-red-900">
+                  <button
+                    onClick={() => handleDeleteStudent(student.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </td>
@@ -220,7 +303,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-primary-900">Teacher Management</h2>
-        <button className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center">
+        <button 
+          onClick={() => setShowAddTeacher(true)}
+          className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center"
+        >
           <PlusCircle className="h-5 w-5 mr-2" />
           Add Teacher
         </button>
@@ -255,10 +341,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
                   {format(new Date(teacher.joinDate), 'MMM dd, yyyy')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-primary-700 hover:text-primary-900 mr-3">
+                  <button
+                    onClick={() => setEditingTeacher(teacher)}
+                    className="text-primary-700 hover:text-primary-900 mr-3"
+                  >
                     <Edit className="h-5 w-5" />
                   </button>
-                  <button className="text-red-600 hover:text-red-900">
+                  <button
+                    onClick={() => handleDeleteTeacher(teacher.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
                     <Trash2 className="h-5 w-5" />
                   </button>
                 </td>
@@ -274,7 +366,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-primary-900">Exam Room Management</h2>
-        <button className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center">
+        <button 
+          onClick={() => setShowAddRoom(true)}
+          className="px-4 py-2 bg-primary-700 text-white rounded-md hover:bg-primary-900 transition-colors flex items-center"
+        >
           <PlusCircle className="h-5 w-5 mr-2" />
           Add Room
         </button>
@@ -297,12 +392,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
             </div>
             <div className="mt-4">
               <p className="text-sm text-gray-600">Capacity: {room.capacity} students</p>
+              {exams.filter(exam => exam.roomIds.includes(room.id)).length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm font-medium text-gray-700">Scheduled Exams:</p>
+                  {exams.filter(exam => exam.roomIds.includes(room.id)).map(exam => (
+                    <div key={exam.id} className="text-sm text-gray-600 mt-1">
+                      <p>{exam.courseName}</p>
+                      <p>{format(new Date(exam.date), 'MMM dd, yyyy')}</p>
+                      <p>{exam.startTime} - {exam.endTime}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="mt-4 flex space-x-4">
               <button className="flex-1 px-3 py-2 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-300 transition-colors">
                 Schedule
               </button>
-              <button className="flex-1 px-3 py-2 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-300 transition-colors">
+              <button 
+                onClick={() => setEditingRoom(room)}
+                className="flex-1 px-3 py-2 bg-primary-100 text-primary-700 rounded-md hover:bg-primary-300 transition-colors"
+              >
                 Edit
               </button>
             </div>
@@ -312,18 +422,392 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
     </div>
   );
 
+  const renderModals = () => (
+    <>
+      {/* Add Student Modal */}
+      {showAddStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Add New Student</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const newStudent: StudentData = {
+                id: Date.now().toString(),
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                class: formData.get('class') as string,
+                rollNumber: formData.get('rollNumber') as string,
+                attendance: Number(formData.get('attendance')),
+                performanceData: []
+              };
+              handleAddStudent(newStudent);
+            }}>
+              <input name="name" placeholder="Name" className="input-field" required />
+              <input name="email" type="email" placeholder="Email" className="input-field" required />
+              <input name="class" placeholder="Class" className="input-field" required />
+              <input name="rollNumber" placeholder="Roll Number" className="input-field" required />
+              <input name="attendance" type="number" placeholder="Attendance %" className="input-field" required />
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddStudent(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Add Student
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Student Modal */}
+      {editingStudent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Edit Student</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const updatedStudent: StudentData = {
+                ...editingStudent,
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                class: formData.get('class') as string,
+                rollNumber: formData.get('rollNumber') as string,
+                attendance: Number(formData.get('attendance'))
+              };
+              handleEditStudent(updatedStudent);
+            }}>
+              <input name="name" defaultValue={editingStudent.name} className="input-field" required />
+              <input name="email" type="email" defaultValue={editingStudent.email} className="input-field" required />
+              <input name="class" defaultValue={editingStudent.class} className="input-field" required />
+              <input name="rollNumber" defaultValue={editingStudent.rollNumber} className="input-field" required />
+              <input 
+                name="attendance" 
+                type="number" 
+                defaultValue={editingStudent.attendance} 
+                className="input-field" 
+                required 
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingStudent(null)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Teacher Modal */}
+      {showAddTeacher && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Add New Teacher</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const newTeacher: TeacherData = {
+                id: Date.now().toString(),
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                department: formData.get('department') as string,
+                subjects: (formData.get('subjects') as string).split(',').map(s => s.trim()),
+                joinDate: new Date().toISOString()
+              };
+              handleAddTeacher(newTeacher);
+            }}>
+              <input name="name" placeholder="Name" className="input-field" required />
+              <input name="email" type="email" placeholder="Email" className="input-field" required />
+              <input name="department" placeholder="Department" className="input-field" required />
+              <input 
+                name="subjects" 
+                placeholder="Subjects (comma separated)" 
+                className="input-field" 
+                required 
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddTeacher(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Add Teacher
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Teacher Modal */}
+      {editingTeacher && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Edit Teacher</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const updatedTeacher: TeacherData = {
+                ...editingTeacher,
+                name: formData.get('name') as string,
+                email: formData.get('email') as string,
+                department: formData.get('department') as string,
+                subjects: (formData.get('subjects') as string).split(',').map(s => s.trim())
+              };
+              handleEditTeacher(updatedTeacher);
+            }}>
+              <input name="name" defaultValue={editingTeacher.name} className="input-field" required />
+              <input name="email" defaultValue={editingTeacher.email} className="input-field" required />
+              <input 
+                name="department" 
+                defaultValue={editingTeacher.department} 
+                className="input-field" 
+                required 
+              />
+              <input 
+                name="subjects" 
+                defaultValue={editingTeacher.subjects.join(', ')} 
+                className="input-field" 
+                required 
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingTeacher(null)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Exam Room Modal */}
+      {showAddRoom && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Add New Exam Room</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const newRoom: ExamRoom = {
+                id: Date.now().toString(),
+                roomNumber: formData.get('roomNumber') as string,
+                capacity: Number(formData.get('capacity')),
+                floor: formData.get('floor') as string,
+                building: formData.get('building') as string,
+                status: formData.get('status') as 'available' | 'occupied' | 'under-maintenance'
+              };
+              handleAddExamRoom(newRoom);
+            }}>
+              <input name="roomNumber" placeholder="Room Number" className="input-field" required />
+              <input 
+                name="capacity" 
+                type="number" 
+                placeholder="Capacity" 
+                className="input-field" 
+                required 
+              />
+              <input name="floor" placeholder="Floor" className="input-field" required />
+              <input name="building" placeholder="Building" className="input-field" required />
+              <select name="status" className="input-field" required>
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="under-maintenance">Under Maintenance</option>
+              </select>
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddRoom(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Add Room
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Exam Room Modal */}
+      {editingRoom && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Edit Exam Room</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const updatedRoom: ExamRoom = {
+                ...editingRoom,
+                roomNumber: formData.get('roomNumber') as string,
+                capacity: Number(formData.get('capacity')),
+                floor: formData.get('floor') as string,
+                building: formData.get('building') as string,
+                status: formData.get('status') as 'available' | 'occupied' | 'under-maintenance'
+              };
+              handleEditExamRoom(updatedRoom);
+            }}>
+              <input 
+                name="roomNumber" 
+                defaultValue={editingRoom.roomNumber} 
+                className="input-field" 
+                required 
+              />
+              <input 
+                name="capacity" 
+                type="number" 
+                defaultValue={editingRoom.capacity} 
+                className="input-field" 
+                required 
+              />
+              <input 
+                name="floor" 
+                defaultValue={editingRoom.floor} 
+                className="input-field" 
+                required 
+              />
+              <input 
+                name="building" 
+                defaultValue={editingRoom.building} 
+                className="input-field" 
+                required 
+              />
+              <select 
+                name="status" 
+                defaultValue={editingRoom.status} 
+                className="input-field" 
+                required
+              >
+                <option value="available">Available</option>
+                <option value="occupied">Occupied</option>
+                <option value="under-maintenance">Under Maintenance</option>
+              </select>
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingRoom(null)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Exam Modal */}
+      {showScheduleExam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Schedule New Exam</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const newExam: ExamSchedule = {
+                id: Date.now().toString(),
+                courseName: formData.get('courseName') as string,
+                date: formData.get('date') as string,
+                startTime: formData.get('startTime') as string,
+                endTime: formData.get('endTime') as string,
+                roomIds: Array.from(formData.getAll('rooms')).map(String)
+              };
+              handleScheduleExam(newExam);
+            }}>
+              <input name="courseName" placeholder="Course Name" className="input-field" required />
+              <input name="date" type="date" className="input-field" required />
+              <div className="flex gap-2">
+                <input name="startTime" type="time" className="input-field flex-1" required />
+                <input name="endTime" type="time" className="input-field flex-1" required />
+              </div>
+              <div className="mt-2">
+                <h4 className="font-medium mb-2">Select Rooms:</h4>
+                {examRooms.map(room => (
+                  <label key={room.id} className="flex items-center space-x-2 mb-2">
+                    <input 
+                      type="checkbox" 
+                      name="rooms" 
+                      value={room.id} 
+                      className="form-checkbox text-primary-600"
+                    />
+                    <span>{room.roomNumber} ({room.building})</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={() => setShowScheduleExam(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="px-4 py-2 bg-primary-700 text-white rounded hover:bg-primary-800"
+                >
+                  Schedule Exam
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview':
-        return renderOverview();
-      case 'students':
-        return renderStudents();
-      case 'teachers':
-        return renderTeachers();
-      case 'examRooms':
-        return renderExamRooms();
-      default:
-        return null;
+      case 'overview': return renderOverview();
+      case 'students': return renderStudents();
+      case 'teachers': return renderTeachers();
+      case 'examRooms': return renderExamRooms();
+      default: return null;
     }
   };
 
@@ -378,6 +862,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogout }) => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
+        {renderModals()}
       </main>
     </div>
   );
